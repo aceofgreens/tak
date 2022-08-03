@@ -1,6 +1,7 @@
 #include <iostream>
 #include <list>
 #include <vector>
+#include <utility>
 
 
 template<typename T>
@@ -39,6 +40,60 @@ class Board {
             board[i][j].push_back(p);
         }
 
+        bool dfs(TakBoard& board, const int k, const bool west_east) {
+            size_t n = get_size();
+            int i; 
+            int j;
+            if (west_east == true) {
+                i = k;
+                j = 0;
+            } else {
+                i = 0;
+                j = k;
+            }
+            int current_player = board[i][j].back().player;
+        };
+
+        std::pair<bool, bool> victory(TakBoard& board) {
+            n = get_size();
+            bool player_one_wins = false;
+            bool player_two_wins = false;
+            for (size_t i = 0; i < n; i++) { // First check for west-east road
+                // If there are stones placed and their owner is not a winner yet
+                if ((board[i][0].size() > 0) && (board[i][0].back().player == 1 ? player_one_wins == false : player_two_wins == false)) {
+                    if (board[i][0].back().flat || board[i][0].back().capstone) { // If they count towards the road
+                        bool res = dfs(board, i, true); // Call DFS starting from that position
+                        if (res == true) { // If there is a road, there is a winner
+                            if (board[i][0].back().player == 1) { // If it's player one, he wins
+                                player_one_wins = true;
+                            } else {
+                                player_two_wins =  true; // If it's player two, he wins
+                            }
+                            continue; // If there's a winner, we cantinue
+                        }
+                    }
+                }
+            }
+
+            for (size_t j = 0; j < n; j++) { // Then check for north-south road
+                // If there are stones placed and their owner is not a winner yet
+                if ((board[0][j].size() > 0) && (board[0][j].back().player == 1 ? player_one_wins == false : player_two_wins == false)) {
+                    if (board[0][j].back().flat || board[0][j].back().capstone) { // If they count towards the road
+                        bool res = dfs(board, j, false); // Call DFS starting from that position
+                        if (res == true) { // If there is a road, there is a winner
+                            if (board[0][j].back().player == 1) { // If it's player one, he wins
+                                player_one_wins = true;
+                            } else {
+                                player_two_wins =  true; // If it's player two, he wins
+                            }
+                            continue; // If there's a winner, we cantinue
+                        }
+                    }
+                }
+            }
+        return std::pair<bool, bool>(player_one_wins, player_two_wins);
+        }
+
         void print_board() {
             for (size_t i = 0; i < n; i++) {
                 for (size_t j = 0; j < n; j++) {
@@ -75,5 +130,7 @@ int main() {
 
     print(board.get_size());
     board.print_board();
+    std::pair<bool, bool> result = board.victory(board.board);
+    std::cout << result.first << " " << result.second << std::endl;
     return 0;
 }
