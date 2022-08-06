@@ -36,8 +36,19 @@ class Board {
             return carry_limit;
         }
 
+        bool check_if_valid_to_add(Piece& p, size_t i, size_t j) {
+            bool valid = true;
+
+            if (board[i][j].size() > 0) { // New pieces can be placed on empty spaces only
+                valid = false;
+            }
+            return valid;
+        }
+
         void add_piece(Piece& p, size_t i, size_t j) {
-            board[i][j].push_back(p);
+            if (check_if_valid_to_add(p, i, j) == true) {
+                board[i][j].push_back(p);
+            }
         }
 
         // TODO: This should be a static method 
@@ -145,21 +156,27 @@ class Board {
             for (size_t i = 0; i < n; i++) {
                 for (size_t j = 0; j < n; j++) {
                     if (board[i][j].size() == 0) {
-                        print("|   |", " ");
+                        std::cout << std::string(12, ' ') << "|";
                     } else {
                         std::list<Piece>::iterator it;
+			int symbols_printed = 0;
                         for (it = board[i][j].begin(); it != board[i][j].end(); ++it) {
                             if (it->capstone) {
-                                std::cout << it->player << "c, ";
+                                std::cout << it->player << "c,";
+				symbols_printed += 3;
                             } else if (! it->flat) {
-                                std::cout << it->player << "s, ";
+                                std::cout << it->player << "s,";
+				symbols_printed += 3;
                             } else {
-                                std::cout << it->player << " ";
+                                std::cout << it->player << ",";
+				symbols_printed += 2;
                             }
                         }
+			std::cout << std::string(12 - symbols_printed, ' ');
+			std::cout << "|";
                     }   
                 }
-                print("\n", " ");
+                print("\n", "");
             }
         }
     };
