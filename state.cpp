@@ -2,11 +2,24 @@
 #include <list>
 #include <vector>
 #include <utility>
+#include <algorithm>
 
 
 template<typename T>
 void print(T x, std::string sep = "\n") {
     std::cout << x << sep;
+}
+
+enum Player {
+    one = 1,
+    two = 2
+};
+
+enum Direction {
+    north = 1,
+    east = 2,
+    south = 3,
+    west = 4
 }
 
 struct Piece {
@@ -24,13 +37,7 @@ struct Piece {
         }
 };
 
-enum Player {
-    one = 1,
-    two = 2
-};
-
 typedef std::vector<std::vector<std::list<Piece*>>> TakBoard;
-
 
 class TakGame {
     private:
@@ -241,6 +248,70 @@ class TakGame {
                 }
             }
             return std::pair<bool, bool>(player_one_wins, player_two_wins);
+        }
+
+        void move_stack(std::pair<int, int> pos, int player, Direction direction, std::vector<int> partition) {
+            // Check that the position is within the board
+            if (pos.first < 0 || pos.second < 0 || pos.first >= static_cast<int>(board_size) || pos.second >= static_cast<int>(board_size)) {
+                std::cout << "Invalid movement, position outside of board" << std::endl;
+                return;
+            }
+
+            // Check that the position is not empty
+            if (board[pos.first][pos.second].size() == 0) {
+                std::cout << "Invalid movement, position is empty" << std::endl;
+                return;
+            }
+
+            // Check that the position is controlled by the player
+            if (board[pos.first][pos.second].back()->player != player) {
+                std::cout << "Invalid movement, position not controlled by player" << std::endl;
+                return;
+            }
+
+            // Check the directions don't try to move us out of the board
+            if (pos.first == 0 && direction == Direction::north) {
+                std::cout << "Invalid movement, cannot move north" << std::endl; 
+                return;
+            } else if (pos.first == board_size - 1 && direction == Direction::south) {
+                std::cout << "Invalid movement, cannot move south" << std::endl; 
+                return;
+            } else if (pos.second == 0 && direction == Direction::west) {
+                std::cout << "Invalid movement, cannot move west" << std::endl;
+                return;
+            } else if (pos.second == board_size - 1 && direction == Direction::east) {
+                std::cout << "Invalid movement, cannot move east" << std::endl; 
+                return;
+            }
+
+            int i = pos.first;
+            int j = pos.second;
+            int num_pieces_in_position = board[i][j].size();
+            int num_pieces_carried = std::min(num_pieces_in_position, carry_limit);
+            int sum_of_partitions = 0;
+
+            // Check the first partition element
+            if (partition[0] < 0) {
+                std::cout << "Invalid movement, invalid partition specified" << std::endl;
+                return;
+            }
+            
+            for (size_t i=0; i < partition.size(); i++) {
+                int v = partition[i]
+                if (i >= 1 && v < 1) {
+                    std::cout << "Invalid movement, invalid partition specified" << std::endl;
+                    return;
+                }
+                sum_of_partitions += v;
+            }
+            if (sum_of_partitions != num_pieces_carried) {
+                std::cout << "Invalid movement, partition should sum to " << num_pieces_carried << std::endl;
+            }
+            
+
+            // if (direction == Direction::north) {
+                
+            // }
         }
 
         void print_board() {
