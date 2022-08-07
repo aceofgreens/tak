@@ -20,7 +20,7 @@ enum Direction {
     east = 2,
     south = 3,
     west = 4
-}
+};
 
 struct Piece {
     public:
@@ -75,16 +75,16 @@ class TakGame {
             player_one_pieces = std::vector<Piece>();
             if (board_size != 5) {std::cout << "Please set board size to 5";}
             for (int ix = 0; ix < 21; ix++) {
-                player_one_pieces.push_back(Piece {ix, 1, false, false});
+                player_one_pieces.push_back(Piece {ix, 1, false, true});
             }
             player_one_pieces.push_back(Piece {21, 1, true, false});
 
             // Create player two pieces
             player_two_pieces = std::vector<Piece>();
             for (int ix = 0; ix < 21; ix++) {
-                player_two_pieces.push_back(Piece {ix, 2, false, false});
+                player_two_pieces.push_back(Piece {ix, 2, false, true});
             }
-            player_one_pieces.push_back(Piece {21, 2, true, false});
+            player_two_pieces.push_back(Piece {21, 2, true, false});
         }
 
         void add_piece_to_board(std::pair<int, int> pos, int player, bool capstone = false, bool standing = false) {
@@ -120,7 +120,7 @@ class TakGame {
                 } else {
                     // Place the stone, if it's standing, indicate it, add it to the board
                     player_one_pieces[player_one_pieces_placed].pos = pos;
-                    if (standing) {player_one_pieces[player_one_pieces_placed].flat = false;}
+                    if (standing == true) {player_one_pieces[player_one_pieces_placed].flat = false;}
                     board[pos.first][pos.second].push_back(&(player_one_pieces[player_one_pieces_placed]));
                     player_one_pieces_placed += 1;
                 }
@@ -139,7 +139,7 @@ class TakGame {
                 } else {
                     // Place the stone, if it's standing, indicate it
                     player_two_pieces[player_two_pieces_placed].pos = pos;
-                    if (standing) {player_two_pieces[player_two_pieces_placed].flat = false;}
+                    if (standing == true) {player_two_pieces[player_two_pieces_placed].flat = false;}
                     board[pos.first][pos.second].push_back(&(player_two_pieces[player_two_pieces_placed]));
                     player_two_pieces_placed += 1;
                 }
@@ -273,13 +273,13 @@ class TakGame {
             if (pos.first == 0 && direction == Direction::north) {
                 std::cout << "Invalid movement, cannot move north" << std::endl; 
                 return;
-            } else if (pos.first == board_size - 1 && direction == Direction::south) {
+            } else if (pos.first == static_cast<int>(board_size) - 1 && direction == Direction::south) {
                 std::cout << "Invalid movement, cannot move south" << std::endl; 
                 return;
             } else if (pos.second == 0 && direction == Direction::west) {
                 std::cout << "Invalid movement, cannot move west" << std::endl;
                 return;
-            } else if (pos.second == board_size - 1 && direction == Direction::east) {
+            } else if (pos.second == static_cast<int>(board_size) - 1 && direction == Direction::east) {
                 std::cout << "Invalid movement, cannot move east" << std::endl; 
                 return;
             }
@@ -287,7 +287,7 @@ class TakGame {
             int i = pos.first;
             int j = pos.second;
             int num_pieces_in_position = board[i][j].size();
-            int num_pieces_carried = std::min(num_pieces_in_position, carry_limit);
+            int num_pieces_carried = std::min(num_pieces_in_position, static_cast<int>(carry_limit));
             int sum_of_partitions = 0;
 
             // Check the first partition element
@@ -296,21 +296,77 @@ class TakGame {
                 return;
             }
             
-            for (size_t i=0; i < partition.size(); i++) {
-                int v = partition[i]
-                if (i >= 1 && v < 1) {
+            // Check that all subsequent partitions leave at least 1 piece per space
+            for (size_t ix=0; ix < partition.size(); ix++) {
+                int v = partition[ix];
+                if (ix >= 1 && v < 1) {
                     std::cout << "Invalid movement, invalid partition specified" << std::endl;
                     return;
                 }
                 sum_of_partitions += v;
             }
+
+            // Check that the partition sums up to the number of pieces carried
             if (sum_of_partitions != num_pieces_carried) {
                 std::cout << "Invalid movement, partition should sum to " << num_pieces_carried << std::endl;
             }
-            
 
-            // if (direction == Direction::north) {
+            // Check that there are no standing stones or capstones along the partition
+            int new_i;
+            int new_j;
+            for (size_t ix = 0; ix < partition.size(); ix++) {                
+                // Get the new position, consisting of new_i and new_j
+                if (direction == Direction::north) {
+                    new_i = i + ix;
+                    new_j = j;
+                } else if (direction == Direction::east) {
+                    new_i = i;
+                    new_j = j + ix;
+                } else if (direction == Direction::south) {
+                    new_i = i - ix;
+                    new_j = j;
+                } else {
+                    new_i = i;
+                    new_j = j - ix;
+                }
+                if (board[new_i][new_j].back()->capstone || !board[new_i][new_j].back()->flat) {
+                    std::cout << "Invalid movement, capstones or standing stones present along move path" << std::endl;
+                    return;
+                }
+            }
+            
+            // // At this point, the partition should be valid and we just have to execute the move.
+            // // Set iterator pointing to middle of stack, before moving any pieces
+            // std::list<Piece*>::iterator it = board[i][j].begin() + static_cast<int>(board[i][j].size() - num_pieces_carried);
+
+            // for (size_t ix = 0; ix < partition.size(); ix++) {
+            //     int v = partition[ix];
                 
+            //     // Get the new position, consisting of new_i and new_j
+            //     if (direction == Direction::north) {
+            //         new_i = i + ix;
+            //         new_j = j;
+            //     } else if (direction == Direction::east) {
+            //         new_i = i;
+            //         new_j = j + ix;
+            //     } else if (direction == Direction::south) {
+            //         new_i = i - ix;
+            //         new_j = j;
+            //     } else {
+            //         new_i = i;
+            //         new_j = j - ix;
+            //     }
+
+            //     for (int __ix = 0; __ix < v; __ix++) {
+            //         // Move the current piece pointed at by iterator it to the new position new_pos
+            //         if (ix == 0) {
+            //             it++;
+            //             continue;
+            //         };
+            //         it->pos = std::pair<int, int>(new_i, new_j);
+            //         board[new_i][new_j].push_back(&(*it)); // Add *it to top here
+            //         it = board[i][j].erase(it); // Delete the element from old position
+            //     }
             // }
         }
 
@@ -326,7 +382,7 @@ class TakGame {
                             if ((*it)->capstone) {
                                 std::cout << (*it)->player << "c,";
 				                symbols_printed += 3;
-                            } else if (! (*it)->flat) {
+                            } else if ((*it)->flat == false) {
                                 std::cout << (*it)->player << "s,";
 				                symbols_printed += 3;
                             } else {
@@ -346,6 +402,13 @@ class TakGame {
 
 int main() {
     TakGame game {5};
+    game.add_piece_to_board(std::pair<int, int>(2, 3), 1, false, false);
+    game.add_piece_to_board(std::pair<int, int>(3, 4), 2, false, false);
+    game.add_piece_to_board(std::pair<int, int>(0, 0), 1, false, true);
+    game.add_piece_to_board(std::pair<int, int>(4, 4), 2, false, true);
+    game.add_piece_to_board(std::pair<int, int>(1, 4), 1, true, false);
+    game.add_piece_to_board(std::pair<int, int>(1, 3), 2, true, false);
+
     game.print_board();
     return 0;
 }
