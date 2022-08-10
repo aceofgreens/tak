@@ -46,23 +46,23 @@ void TakGame::reset_game() {
     player_two_capstone_placed = false;
 }
 
-void TakGame::add_piece_to_board(std::pair<int, int> pos, int player, bool capstone = false, bool standing = false) {
+int TakGame::add_piece_to_board(std::pair<int, int> pos, int player, bool capstone = false, bool standing = false) {
     // Check that the position is within the board
     if (pos.first < 0 || pos.second < 0 || pos.first >= static_cast<int>(board_size) || pos.second >= static_cast<int>(board_size)) {
         std::cout << "Invalid placement, position outside of board" << std::endl;
-        return;
+        return -1;
     }
 
     // Check that the position is empty
     if (board[pos.first][pos.second].size() > 0) {
         std::cout << "Invalid placement, position not empty" << std::endl;
-        return;
+        return -1;
     }
 
     // Check that not all normal stones are placed
     if (capstone == false && (player_one_pieces_placed >= 21 || player_two_pieces_placed >= 21)) {
         std::cout << "Invalid placement, all normal stones already placed" << std::endl;
-        return;
+        return -1;
     }
 
     if (player == 1) { // First do it for player 1
@@ -70,7 +70,7 @@ void TakGame::add_piece_to_board(std::pair<int, int> pos, int player, bool capst
             // A capstone should not be already placed
             if (player_one_capstone_placed == true) {
                 std::cout << "Invalid placement, capstone already placed" << std::endl;
-                return;
+                return -1;
             }
 
             // Place the capstone
@@ -89,7 +89,7 @@ void TakGame::add_piece_to_board(std::pair<int, int> pos, int player, bool capst
             // A capstone should not be already placed
             if (player_two_capstone_placed == true) {
                 std::cout << "Invalid placement, capstone already placed" << std::endl;
-                return;
+                return -1;
             }
 
             // Place the capstone
@@ -105,9 +105,9 @@ void TakGame::add_piece_to_board(std::pair<int, int> pos, int player, bool capst
         }
     } else {
         std::cout << "Invalid placement, invalid player specified" << std::endl;
-        return;
+        return -1;
     }
-    return;
+    return 0;
 }
 
 bool TakGame::dfs(const std::pair<size_t, size_t> pos, const bool west_east, std::vector<std::vector<bool>>& visited) {
@@ -210,38 +210,38 @@ std::pair<bool, bool> TakGame::victory() {
     return std::pair<bool, bool>(player_one_wins, player_two_wins);
 }
 
-void TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction, std::vector<int> partition) {
+int TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction, std::vector<int> partition) {
     // Check that the position is within the board
     if (pos.first < 0 || pos.second < 0 || pos.first >= static_cast<int>(board_size) || pos.second >= static_cast<int>(board_size)) {
         std::cout << "Invalid movement, position outside of board" << std::endl;
-        return;
+        return -1;
     }
 
     // Check that the position is not empty
     if (board[pos.first][pos.second].size() == 0) {
         std::cout << "Invalid movement, position is empty" << std::endl;
-        return;
+        return -1;
     }
 
     // Check that the position is controlled by the player
     if (board[pos.first][pos.second].back()->player != player) {
         std::cout << "Invalid movement, position not controlled by player" << std::endl;
-        return;
+        return -1;
     }
 
     // Check the directions don't try to move us out of the board
     if (pos.first == 0 && direction == Direction::north) {
         std::cout << "Invalid movement, cannot move north" << std::endl; 
-        return;
+        return -1;
     } else if (pos.first == static_cast<int>(board_size) - 1 && direction == Direction::south) {
         std::cout << "Invalid movement, cannot move south" << std::endl; 
-        return;
+        return -1;
     } else if (pos.second == 0 && direction == Direction::west) {
         std::cout << "Invalid movement, cannot move west" << std::endl;
-        return;
+        return -1;
     } else if (pos.second == static_cast<int>(board_size) - 1 && direction == Direction::east) {
         std::cout << "Invalid movement, cannot move east" << std::endl; 
-        return;
+        return -1;
     }
 
     int i = pos.first;
@@ -253,7 +253,7 @@ void TakGame::move_stack(std::pair<int, int> pos, int player, Direction directio
     // Check the first partition element
     if (partition[0] < 0) {
         std::cout << "Invalid movement, invalid partition specified" << std::endl;
-        return;
+        return -1;
     }
     
     // Check that all subsequent partitions leave at least 1 piece per space
@@ -261,7 +261,7 @@ void TakGame::move_stack(std::pair<int, int> pos, int player, Direction directio
         int v = partition[ix];
         if (ix >= 1 && v < 1) {
             std::cout << "Invalid movement, invalid partition specified" << std::endl;
-            return;
+            return -1;
         }
         sum_of_partitions += v;
     }
@@ -269,7 +269,7 @@ void TakGame::move_stack(std::pair<int, int> pos, int player, Direction directio
     // Check that the partition sums up to the number of pieces carried
     if (sum_of_partitions != num_pieces_carried) {
         std::cout << "Invalid movement, partition should sum to " << num_pieces_carried << std::endl;
-        return;
+        return -1;
     }
 
     // Check that there are no standing stones or capstones along the partition
@@ -292,7 +292,7 @@ void TakGame::move_stack(std::pair<int, int> pos, int player, Direction directio
         }
         if (board[new_i][new_j].back()->capstone || board[new_i][new_j].back()->flat == false) {
             std::cout << "Invalid movement, capstones or standing stones present along move path" << std::endl;
-            return;
+            return -1;
         }
     }
     
@@ -330,6 +330,7 @@ void TakGame::move_stack(std::pair<int, int> pos, int player, Direction directio
             it = board[i][j].erase(it); // Delete the pointer from the old stack
         }
     }
+    return 0;
 }
 
 void TakGame::run() {
@@ -338,7 +339,7 @@ void TakGame::run() {
     print_board();
     while (true) {                
         // Get user command
-        std::cout << "Enter command:" << std::endl;
+        std::cout << "Player " << current_player << " command: ";
         std::getline(std::cin, command);
 
         // Extract command tokens
@@ -353,10 +354,13 @@ void TakGame::run() {
         }
         tokens.push_back(command.substr(0, command.length()));
 
-        // Use "q" to quit
+        // Use "q" to quit and "r" to reset the game
         std::string main_command = tokens[0];
         if (main_command == "q") {
             break;
+        } else if (main_command == "r") {
+            reset_game();
+            continue;
         }
 
         if (tokens.size() < 3) {
@@ -364,29 +368,40 @@ void TakGame::run() {
             continue;
         }
 
+        // Parse the command tokens
         int i = stoi(tokens[1]);
         int j = stoi(tokens[2]);
         std::string specifier = tokens[3];
-        std::cout << "Position" << i << " " << j << " " << "Specifier: " << specifier << std::endl;
+        bool valid = false;
         if (main_command == "p") { // A "p" stands for place, i.e. add a new piece
+            int command_result;
             if (specifier == "c") {
-                add_piece_to_board(std::pair<int, int>(i, j), current_player, true, false);
+                command_result = add_piece_to_board(std::pair<int, int>(i, j), current_player, true, false);
             } else if (specifier == "s") {
-                add_piece_to_board(std::pair<int, int>(i, j), current_player, false, true);
+                command_result = add_piece_to_board(std::pair<int, int>(i, j), current_player, false, true);
             } else if (specifier == "f") {
-                add_piece_to_board(std::pair<int, int>(i, j), current_player, false, false);
+                command_result = add_piece_to_board(std::pair<int, int>(i, j), current_player, false, false);
             } else {
                 std::cout << "Failed to parse command, invalid specifier" << std::endl;
+                valid = false;
             }
+            if (command_result >= 0) {
+                valid = true;
+            }
+        }
+        // } else if (main_command == "m") { // m 2 3 r 0,1,1,1
+
+        // }
+
+        // If it's a valid command, change the player
+        if (valid) {
+            current_player = current_player == 1 ? 2 : 1;
         }
         print_board();
         // } else if (main_command == "m") { // A "m" stands for move, i.e. move a stack
 
         // }
         
-        // TODO: Figure out how to track successful moves vs errors and how to change the players
-        // Upon a successful the current player
-        // current_player = current_player == 1 ? 2 : 1;
     }
 }
 
