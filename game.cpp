@@ -210,7 +210,7 @@ std::pair<bool, bool> TakGame::victory() {
     return std::pair<bool, bool>(player_one_wins, player_two_wins);
 }
 
-int TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction, std::vector<int> partition) {
+int TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction, std::vector<int>& partition) {
     // Check that the position is within the board
     if (pos.first < 0 || pos.second < 0 || pos.first >= static_cast<int>(board_size) || pos.second >= static_cast<int>(board_size)) {
         std::cout << "Invalid movement, position outside of board" << std::endl;
@@ -278,18 +278,19 @@ int TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction
     for (size_t ix = 0; ix < partition.size(); ix++) {                
         // Get the new position, consisting of new_i and new_j
         if (direction == Direction::north) {
-            new_i = i + ix;
+            new_i = i - ix;
             new_j = j;
         } else if (direction == Direction::east) {
             new_i = i;
             new_j = j + ix;
         } else if (direction == Direction::south) {
-            new_i = i - ix;
+            new_i = i + ix;
             new_j = j;
         } else {
             new_i = i;
             new_j = j - ix;
         }
+
         if (board[new_i][new_j].back()->capstone || board[new_i][new_j].back()->flat == false) {
             std::cout << "Invalid movement, capstones or standing stones present along move path" << std::endl;
             return -1;
@@ -306,13 +307,13 @@ int TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction
         
         // Get the new position, consisting of new_i and new_j
         if (direction == Direction::north) {
-            new_i = i + ix;
+            new_i = i - ix;
             new_j = j;
         } else if (direction == Direction::east) {
             new_i = i;
             new_j = j + ix;
         } else if (direction == Direction::south) {
-            new_i = i - ix;
+            new_i = i + ix;
             new_j = j;
         } else {
             new_i = i;
@@ -336,8 +337,9 @@ int TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction
 void TakGame::run() {
     std::string command;
     int current_player = 1;
-    print_board();
     while (true) {                
+        print_board();
+
         // Get user command
         std::cout << "Player " << current_player << " command: ";
         std::getline(std::cin, command);
@@ -388,20 +390,35 @@ void TakGame::run() {
             if (command_result >= 0) {
                 valid = true;
             }
+        } else if (main_command == "m") { // m 2 3 r 0,1,1,1
+            int command_result;
+            std::vector<int> partition_vector;
+            for (size_t _ix = 0; _ix < tokens[4].length(); _ix++) {
+                if (tokens[4][_ix] == ',')
+                    continue;
+                partition_vector.push_back(tokens[4][_ix] - '0');
+            }
+            if (specifier == "n" || specifier == "u") {
+                command_result = move_stack(std::pair<int, int>(i, j), current_player, Direction{north}, partition_vector);
+            } else if (specifier == "e" || specifier == "r") {
+                command_result = move_stack(std::pair<int, int>(i, j), current_player, Direction{east}, partition_vector);
+            } else if (specifier == "s" || specifier == "d") {
+                command_result = move_stack(std::pair<int, int>(i, j), current_player, Direction{south}, partition_vector);
+            } else if (specifier == "w" || specifier == "l") {
+                command_result = move_stack(std::pair<int, int>(i, j), current_player, Direction{west}, partition_vector);
+            } else {
+                std::cout << "Failed to parse command, invalid specifier" << std::endl;
+                valid = false;
+            }
+            if (command_result >= 0) {
+                valid = true;
+            }
         }
-        // } else if (main_command == "m") { // m 2 3 r 0,1,1,1
-
-        // }
 
         // If it's a valid command, change the player
         if (valid) {
             current_player = current_player == 1 ? 2 : 1;
         }
-        print_board();
-        // } else if (main_command == "m") { // A "m" stands for move, i.e. move a stack
-
-        // }
-        
     }
 }
 
