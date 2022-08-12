@@ -292,23 +292,18 @@ int TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction
             new_j = j - ix;
         }
 
-        // if (board[new_i][new_j].size() > 0) { // There is a piece there
-        //     if (board[new_i][new_j].back()->capstone) {
-        //         std::cout << "Invalid movement, capstones or standing stones present along move path" << std::endl;
-        //         return -1;
-        //     } else if (board[new_i][new_j].back()->flat == false) { // Standing stone
-        //         if (ix == partition.size() - 1) { // The standing stone is the last stone encountered in the path
-        //             if (!top_is_capstone) {
-        //                 std::cout << "Invalid movement, capstones or standing stones present along move path" << std::endl;
-        //             }
-        //         }
-        //     }
-        // }
-
-        if (board[new_i][new_j].size() > 0 && \
-            (board[new_i][new_j].back()->capstone || (board[new_i][new_j].back()->flat == false))) {
-            std::cout << "Invalid movement, capstones or standing stones present along move path" << std::endl;
-            return -1;
+        if (board[new_i][new_j].size() > 0) { // There is a piece there
+            if (board[new_i][new_j].back()->capstone) {
+                std::cout << "Invalid movement, capstones or standing stones present along move path" << std::endl;
+                return -1;
+            } else if (board[new_i][new_j].back()->flat == false) { // Standing stone
+                if (ix == partition.size() - 1) { // The standing stone is the last stone encountered in the path
+                    if (!top_is_capstone || partition[ix] != 1) {
+                        std::cout << "Invalid movement, capstones or standing stones present along move path" << std::endl;
+                        return -1;
+                    }
+                }
+            }
         }
     }
     
@@ -341,11 +336,13 @@ int TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction
                 it++;
                 continue;
             }
+            // If landing piece is standing, and the last piece we move is a capstone, flatten it
+            if (board[new_i][new_j].size() > 0 && board[new_i][new_j].back()->flat == false) {
+                board[new_i][new_j].back()->flat = true;
+            }
             (*it)->pos = std::pair<int, int>(new_i, new_j); // Update the position of the piece
             board[new_i][new_j].push_back(*it); // Add the pointer to the new stack
             it = board[i][j].erase(it); // Delete the pointer from the old stack
-
-
         }
     }
     return 0;
