@@ -249,6 +249,7 @@ int TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction
     int num_pieces_in_position = board[i][j].size();
     int num_pieces_carried = std::min(num_pieces_in_position, static_cast<int>(carry_limit));
     int sum_of_partitions = 0;
+    bool top_is_capstone = board[i][j].back()->capstone;
 
     // Check the first partition element
     if (partition[0] < 0) {
@@ -275,7 +276,7 @@ int TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction
     // Check that there are no standing stones or capstones along the partition
     int new_i;
     int new_j;
-    for (size_t ix = 0; ix < partition.size(); ix++) {                
+    for (size_t ix = 1; ix < partition.size(); ix++) {                
         // Get the new position, consisting of new_i and new_j
         if (direction == Direction::north) {
             new_i = i - ix;
@@ -291,7 +292,21 @@ int TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction
             new_j = j - ix;
         }
 
-        if (board[new_i][new_j].back()->capstone || board[new_i][new_j].back()->flat == false) {
+        // if (board[new_i][new_j].size() > 0) { // There is a piece there
+        //     if (board[new_i][new_j].back()->capstone) {
+        //         std::cout << "Invalid movement, capstones or standing stones present along move path" << std::endl;
+        //         return -1;
+        //     } else if (board[new_i][new_j].back()->flat == false) { // Standing stone
+        //         if (ix == partition.size() - 1) { // The standing stone is the last stone encountered in the path
+        //             if (!top_is_capstone) {
+        //                 std::cout << "Invalid movement, capstones or standing stones present along move path" << std::endl;
+        //             }
+        //         }
+        //     }
+        // }
+
+        if (board[new_i][new_j].size() > 0 && \
+            (board[new_i][new_j].back()->capstone || (board[new_i][new_j].back()->flat == false))) {
             std::cout << "Invalid movement, capstones or standing stones present along move path" << std::endl;
             return -1;
         }
@@ -329,6 +344,8 @@ int TakGame::move_stack(std::pair<int, int> pos, int player, Direction direction
             (*it)->pos = std::pair<int, int>(new_i, new_j); // Update the position of the piece
             board[new_i][new_j].push_back(*it); // Add the pointer to the new stack
             it = board[i][j].erase(it); // Delete the pointer from the old stack
+
+
         }
     }
     return 0;
